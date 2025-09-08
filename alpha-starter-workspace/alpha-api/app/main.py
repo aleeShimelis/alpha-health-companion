@@ -1,4 +1,5 @@
 # alpha-api/app/main.py
+from . import models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
