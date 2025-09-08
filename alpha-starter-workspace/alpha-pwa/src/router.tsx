@@ -1,4 +1,5 @@
 import Vitals from './pages/VitalsPage'
+import Symptoms from './pages/SymptomsPage'
 
 
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -24,6 +25,7 @@ export default function AppRouter() {
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="/vitals" element={<Protected><Vitals /></Protected>} />
+        <Route path="/symptoms" element={<Protected><Symptoms /></Protected>} />
 
       </Routes>
     </AuthProvider>

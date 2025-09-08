@@ -1,0 +1,25 @@
+# Cursor Rules for ALPHA
+
+## Architecture
+- Keep to FastAPI + SQLAlchemy models with a single shared Base from `app/db.py`.
+- Ensure `from . import models` runs before `Base.metadata.create_all(bind=engine)` in `app/main.py`.
+- `vital_records.user_id` must FK to `users.id`. Do not split Bases.
+
+## API Style
+- Pydantic request = `XxxIn`, response = `XxxOut`.
+- Use `/auth`, `/profiles`, `/vitals`, `/symptoms`, `/reports`, `/goals`, `/reminders` route groups.
+- Use `Depends(get_current_user)` for protected routes.
+- Status codes: POST=201, PUT/PATCH=200, DELETE=204, validation errors=400.
+
+## Frontend
+- React + TS + Vite, router-based pages. Use `AuthContext` to store token in localStorage.
+- API base from `import.meta.env.VITE_API_BASE`.
+- Avoid case-only filename changes (Windows). Use `VitalsPage.tsx`.
+
+## Docs Consistency
+- Align with `docs/alpha-brief.md` and `docs/CS500_G24_ALPHA_Intelligent_Health_companion_and_Monitoring_System*`.
+- No caregiver actor. Use non-clinical language and disclaimers.
+
+## Testing & DX
+- Keep small vertical slices: implement route + basic UI + smoke tests, then iterate.
+- Write migration-ready models (later we’ll add Alembic).

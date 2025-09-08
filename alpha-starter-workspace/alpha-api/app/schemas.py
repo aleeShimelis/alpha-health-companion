@@ -21,3 +21,14 @@ class VitalOut(VitalIn):
     hr_flag: str | None = None
     temp_flag: str | None = None
     glucose_flag: str | None = None
+
+class SymptomIn(BaseModel):
+    description: str = Field(min_length=1, max_length=2000)
+    severity: int | None = Field(default=None, ge=0, le=10)
+    onset_at: datetime | None = None
+
+
+class SymptomOut(SymptomIn):
+    id: str
+    user_id: str
+    created_at: datetime

@@ -8,6 +8,7 @@ from . import models
 
 from .routers import auth, profiles
 from .routers import vitals  # if you added it
+from .routers import symptoms
 
 app = FastAPI(title="ALPHA API", version="0.1.0")
 
@@ -32,3 +33,4 @@ app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(profiles.router, prefix="/profiles", tags=["Profile"])
 app.include_router(vitals.router, prefix="/vitals",
                    tags=["Vitals"])  # if present
+app.include_router(symptoms.router, prefix="/symptoms", tags=["Symptoms"]) 
