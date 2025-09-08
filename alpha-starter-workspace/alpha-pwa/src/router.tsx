@@ -1,5 +1,8 @@
 import VitalsPage from './pages/VitalsPage'
 import Symptoms from './pages/SymptomsPage'
+import MedicationDecoderPage from './pages/MedicationDecoderPage'
+import GoalsPage from './pages/GoalsPage'
+import ReportsPage from './pages/ReportsPage'
 
 
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -26,6 +29,9 @@ export default function AppRouter() {
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
         <Route path="/vitals" element={<Protected><VitalsPage /></Protected>} />
         <Route path="/symptoms" element={<Protected><Symptoms /></Protected>} />
+        <Route path="/meds/decoder" element={<Protected><MedicationDecoderPage /></Protected>} />
+        <Route path="/goals" element={<Protected><GoalsPage /></Protected>} />
+        <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
 
       </Routes>
     </AuthProvider>

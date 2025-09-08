@@ -6,7 +6,7 @@ export default function Symptoms() {
   const { token } = useAuth()
   const [items, setItems] = useState<SymptomOut[]>([])
   const [description, setDescription] = useState('')
-  const [severity, setSeverity] = useState<number | ''>('')
+  const [severity, setSeverity] = useState<'' | 'mild' | 'moderate' | 'severe'>('')
   const [onsetAt, setOnsetAt] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
 
@@ -29,7 +29,7 @@ export default function Symptoms() {
     try {
       const payload: SymptomIn = {
         description: description.trim(),
-        severity: severity === '' ? null : Number(severity),
+        severity: severity === '' ? null : severity,
         onset_at: onsetAt ? new Date(onsetAt).toISOString() : null,
       }
       await createSymptom(token, payload)
@@ -49,8 +49,12 @@ export default function Symptoms() {
       <form onSubmit={onSubmit} style={{ display: 'grid', gap: 8, maxWidth: 480 }}>
         <textarea placeholder="Describe your symptom"
           value={description} onChange={e => setDescription(e.target.value)} required />
-        <input type="number" min={0} max={10} placeholder="Severity 0-10"
-          value={severity} onChange={e => setSeverity(e.target.value === '' ? '' : Number(e.target.value))} />
+        <select value={severity} onChange={e => setSeverity(e.target.value as any)}>
+          <option value="">Severity (optional)</option>
+          <option value="mild">mild</option>
+          <option value="moderate">moderate</option>
+          <option value="severe">severe</option>
+        </select>
         <input type="datetime-local" value={onsetAt} onChange={e => setOnsetAt(e.target.value)} />
         <button type="submit">Add Symptom</button>
       </form>
