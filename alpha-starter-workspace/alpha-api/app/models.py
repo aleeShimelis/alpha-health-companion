@@ -72,7 +72,6 @@ class AuditEvent(Base):
 
 # IMPORTANT: make sure vitals model is registered on the same Base
 
-# Import models that live in separate modules at the very end so they're
-# registered on the shared Base before metadata.create_all / Alembic autogenerate
-from .models_symptoms import SymptomRecord  # noqa: E402  (import at end by design)
-from .models_vitals import VitalRecord  # noqa: E402  (import at end by design)
+
+from .models_symptoms import SymptomRecord  # noqa: F401,E402  (import at end by design)
+from .models_vitals import VitalRecord  # noqa: F401,E402  (import at end by design)

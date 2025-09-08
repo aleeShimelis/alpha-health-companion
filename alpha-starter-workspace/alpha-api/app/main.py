@@ -1,11 +1,11 @@
 # alpha-api/app/main.py
-from . import models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .db import Base, engine
-# <-- import registers ALL tables (users, profiles, consents, audit, vitals)
 from . import models
+# <-- import registers ALL tables (users, profiles, consents, audit, vitals)
+
 
 from .routers import auth, profiles
 from .routers import vitals  # if you added it
