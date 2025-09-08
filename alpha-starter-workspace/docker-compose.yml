@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  api:
+    build: ./alpha-api
+    env_file:
+      - ./alpha-api/.env
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: alpha
+      POSTGRES_PASSWORD: alpha
+      POSTGRES_DB: alpha
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"

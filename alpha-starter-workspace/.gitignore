@@ -1,0 +1,13 @@
+# Node / React
+alpha-pwa/node_modules/
+alpha-pwa/dist/
+alpha-pwa/.env
+
+# Python / FastAPI
+alpha-api/__pycache__/
+alpha-api/.venv/
+alpha-api/.env
+*.pyc
+
+# Docker
+*.log
