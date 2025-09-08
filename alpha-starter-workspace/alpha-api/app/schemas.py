@@ -24,11 +24,22 @@ class VitalOut(VitalIn):
 
 class SymptomIn(BaseModel):
     description: str = Field(min_length=1, max_length=2000)
-    severity: int | None = Field(default=None, ge=0, le=10)
-    onset_at: datetime | None = None
+    severity: str | None = Field(default=None, max_length=32)
 
 
 class SymptomOut(SymptomIn):
+    id: str
+    user_id: str
+    created_at: datetime
+
+
+class GoalIn(BaseModel):
+    category: str = Field(pattern=r"^(fitness|sleep|nutrition|meds)$")
+    target_value: str = Field(min_length=1, max_length=2000)
+    cadence: str = Field(min_length=1, max_length=64)
+
+
+class GoalOut(GoalIn):
     id: str
     user_id: str
     created_at: datetime

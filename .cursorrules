@@ -23,3 +23,12 @@
 ## Testing & DX
 - Keep small vertical slices: implement route + basic UI + smoke tests, then iterate.
 - Write migration-ready models (later we’ll add Alembic).
+
+Create a `.cursorrules` at repo root that enforces:
+- Single SQLAlchemy Base from `app/db.py`; all models must import that Base.
+- `from . import models` must run before `Base.metadata.create_all(bind=engine)` in `app/main.py`.
+- `vital_records.user_id` → FK("users.id", ondelete="CASCADE"), and users table must be registered before create_all.
+- React/Vite: `@vitejs/plugin-react` present, `vite.config.ts` imports and registers it. `src/vite-env.d.ts` declares `import.meta.env.VITE_API_BASE`.
+- Prevent Windows casing bugs: page components use PascalCase filenames, e.g., `VitalsPage.tsx`.
+- Non-clinical advice only; caregiver actor is out-of-scope (deferred).
+- Ports: API runs on 8001 when GeoServer uses 8000; frontend reads `VITE_API_BASE`.

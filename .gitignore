@@ -1,0 +1,63 @@
+# --- Node / Vite ---
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
+.cache/
+**/.cache/
+# Env files (keep examples)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Python ---
+venv/
+.venv/
+**/venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+.eggs/
+**/.eggs/
+build/
+**/build/
+site/
+**/site/
+
+# --- IDE / Editor ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.code-workspace
+
+# --- Docker / Logs ---
+logs/
+**/logs/
+*.log
+**/*.log
+/tmp/
+**/tmp/
+
+# --- OS / Misc ---
+.DS_Store
+Thumbs.db
+**/.DS_Store
+**/Thumbs.db

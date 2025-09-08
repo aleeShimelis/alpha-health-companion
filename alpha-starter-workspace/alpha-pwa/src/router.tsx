@@ -1,4 +1,4 @@
-import Vitals from './pages/VitalsPage'
+import VitalsPage from './pages/VitalsPage'
 import Symptoms from './pages/SymptomsPage'
 
 
@@ -24,7 +24,7 @@ export default function AppRouter() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
         <Route path="/profile" element={<Protected><Profile /></Protected>} />
-        <Route path="/vitals" element={<Protected><Vitals /></Protected>} />
+        <Route path="/vitals" element={<Protected><VitalsPage /></Protected>} />
         <Route path="/symptoms" element={<Protected><Symptoms /></Protected>} />
 
       </Routes>

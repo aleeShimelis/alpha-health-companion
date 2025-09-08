@@ -21,7 +21,6 @@ def create_symptom(
         id=new_uuid(), user_id=user.id,
         description=payload.description.strip(),
         severity=payload.severity,
-        onset_at=payload.onset_at,
     )
     db.add(rec)
     db.commit()
@@ -29,7 +28,7 @@ def create_symptom(
 
     return schemas.SymptomOut(
         id=rec.id, user_id=rec.user_id, created_at=rec.created_at,
-        description=rec.description, severity=rec.severity, onset_at=rec.onset_at,
+        description=rec.description, severity=rec.severity,
     )
 
 
@@ -42,14 +41,14 @@ def list_symptoms(
         db.query(SymptomRecord)
         .filter(SymptomRecord.user_id == user.id)
         .order_by(SymptomRecord.created_at.desc())
-        .limit(200)
+        .limit(50)
         .all()
     )
     out: list[schemas.SymptomOut] = []
     for rec in rows:
         out.append(schemas.SymptomOut(
             id=rec.id, user_id=rec.user_id, created_at=rec.created_at,
-            description=rec.description, severity=rec.severity, onset_at=rec.onset_at,
+            description=rec.description, severity=rec.severity,
         ))
     return out
 
