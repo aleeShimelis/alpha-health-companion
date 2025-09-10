@@ -1,0 +1,14 @@
+from fastapi import FastAPI
+
+from .routers import auth, profiles, vitals, symptoms, goals, reports, meds, account
+
+app = FastAPI()
+
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(profiles.router, prefix="/profiles", tags=["Profiles"])
+app.include_router(vitals.router, prefix="/vitals", tags=["Vitals"])
+app.include_router(symptoms.router, prefix="/symptoms", tags=["Symptoms"])
+app.include_router(goals.router, prefix="/goals", tags=["Goals"])
+app.include_router(reports.router, prefix="/reports", tags=["Reports"])
+app.include_router(meds.router, prefix="/meds", tags=["Meds"])
+app.include_router(account.router, prefix="/account", tags=["Account"])

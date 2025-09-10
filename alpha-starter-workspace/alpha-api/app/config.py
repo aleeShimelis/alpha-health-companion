@@ -1,5 +1,7 @@
 # app/config.py
 from __future__ import annotations
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 import os
 from typing import List, Optional
@@ -48,3 +50,19 @@ class Settings(BaseSettings):
 
 # THIS is what main.py imports
 settings = Settings()
+
+
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

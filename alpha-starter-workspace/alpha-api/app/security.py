@@ -33,7 +33,8 @@ def create_access_token(subject: str, minutes: Optional[int] = None, extra: Opti
         payload["exp"] = int(exp.timestamp())
     if extra:
         payload.update(extra)
-    token = jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALG)
+    token = jwt.encode(payload, settings.JWT_SECRET,
+                       algorithm=settings.JWT_ALG)
     if isinstance(token, bytes):
         token = token.decode("utf-8")
     return token
@@ -44,26 +45,32 @@ def new_uuid() -> str:
 
 
 def _get_token_from_header(request: Request) -> str:
-    auth = request.headers.get("authorization") or request.headers.get("Authorization")
+    auth = request.headers.get(
+        "authorization") or request.headers.get("Authorization")
     if not auth or not auth.lower().startswith("bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     return auth.split(" ", 1)[1].strip()
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.User:
     token = _get_token_from_header(request)
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALG])
+        payload = jwt.decode(token, settings.JWT_SECRET,
+                             algorithms=[settings.JWT_ALG])
         sub = payload.get("sub")
         if not sub:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     user = db.query(models.User).get(sub)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
-
