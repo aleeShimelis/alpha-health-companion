@@ -7,7 +7,6 @@ export default function Symptoms() {
   const [items, setItems] = useState<SymptomOut[]>([])
   const [description, setDescription] = useState('')
   const [severity, setSeverity] = useState<'' | 'mild' | 'moderate' | 'severe'>('')
-  const [onsetAt, setOnsetAt] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
 
   async function refresh() {
@@ -30,12 +29,11 @@ export default function Symptoms() {
       const payload: SymptomIn = {
         description: description.trim(),
         severity: severity === '' ? null : severity,
-        onset_at: onsetAt ? new Date(onsetAt).toISOString() : null,
       }
       await createSymptom(token, payload)
       setDescription('')
       setSeverity('')
-      setOnsetAt('')
+      // onset_at is not persisted on backend currently
       refresh()
     } catch (e: any) {
       setError(e.message)
@@ -55,7 +53,7 @@ export default function Symptoms() {
           <option value="moderate">moderate</option>
           <option value="severe">severe</option>
         </select>
-        <input type="datetime-local" value={onsetAt} onChange={e => setOnsetAt(e.target.value)} />
+        {/* onset_at input omitted until backend supports it */}
         <button type="submit">Add Symptom</button>
       </form>
 

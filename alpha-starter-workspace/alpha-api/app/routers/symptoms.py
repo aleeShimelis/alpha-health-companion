@@ -4,6 +4,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..models_symptoms import SymptomRecord
 from ..security import get_current_user, new_uuid
+from ..services.llm_client import llm_client
 
 router = APIRouter()
 
@@ -53,3 +54,47 @@ def list_symptoms(
     return out
 
 
+@router.post("/analyze", response_model=schemas.SymptomAnalysisOut)
+def analyze_symptom(
+    payload: schemas.SymptomIn,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    description = (payload.description or "").strip().lower()
+    severity = (payload.severity or "").strip().lower() if isinstance(payload.severity, str) else None
+
+    advice: list[str] = []
+    risk_flags: list[str] = []
+
+    # Simple rule-based hints
+    if severity == "severe":
+        risk_flags.append("seek-care")
+        advice.append("If symptoms worsen or persist, seek medical care.")
+    if any(k in description for k in ["chest pain", "shortness of breath", "fainting"]):
+        risk_flags.append("urgent")
+        advice.append("These could indicate urgent issues; consider immediate care.")
+    if "fever" in description:
+        advice.append("Hydrate and rest; monitor temperature.")
+    if "headache" in description:
+        advice.append("Consider rest, hydration, and a calm environment.")
+
+    if llm_client.is_configured():
+        # Optionally enrich with LLM while keeping guardrails
+        llm = llm_client.decodeMedication("general symptom guidance", None)
+        extra = llm.get("usage")
+        if extra:
+            advice.append(extra)
+
+    disclaimer = (
+        "General, non-clinical guidance only. Not a diagnosis. "
+        "If in doubt or symptoms are severe, consult a qualified professional."
+    )
+    # Deduplicate advice
+    seen = set()
+    deduped = []
+    for a in advice:
+        if a and a not in seen:
+            seen.add(a)
+            deduped.append(a)
+
+    return schemas.SymptomAnalysisOut(advice=deduped, risk_flags=sorted(set(risk_flags)), disclaimer=disclaimer)

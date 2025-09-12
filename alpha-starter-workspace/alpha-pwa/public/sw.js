@@ -9,8 +9,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : { title: 'ALPHA', body: 'Reminder' }
   event.waitUntil(self.registration.showNotification(data.title || 'ALPHA', {
-    body: data.body || 'You have a reminder',
-    icon: '/icons/icon-192.png'
+    body: data.body || 'You have a reminder'
   }))
 })
 

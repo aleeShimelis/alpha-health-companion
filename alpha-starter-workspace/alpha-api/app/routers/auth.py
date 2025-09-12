@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from .. import models
-from ..security import create_access_token, hash_password, verify_password
+from ..security import create_access_token, hash_password, verify_password, get_current_user
 
 
 router = APIRouter()
@@ -16,6 +16,8 @@ router = APIRouter()
 class RegisterIn(BaseModel):
     email: EmailStr
     password: str
+    consent_privacy: bool = False
+    consent_marketing: bool = False
 
 
 class TokenOut(BaseModel):
@@ -46,6 +48,17 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     user = models.User(email=payload.email, password_hash=hash_password(payload.password))
     db.add(user)
+    db.flush()
+    # Store consent at registration
+    try:
+        consent = models.Consent(
+            user_id=user.id,
+            privacy_accepted=bool(payload.consent_privacy),
+            marketing_opt_in=bool(payload.consent_marketing),
+        )
+        db.add(consent)
+    except Exception:
+        pass
     db.commit()
     token = create_access_token(user.id)
     return TokenOut(access_token=token)
@@ -69,18 +82,6 @@ def login(req: Request, payload: LoginIn, db: Session = Depends(get_db)):
 
 
 @router.get("/me")
-def me(user: models.User = Depends(lambda: None), db: Session = Depends(get_db)):
-    # In a real setup, use get_current_user; placeholder provided here if it's wired elsewhere
-    # Try to import runtime to avoid circulars
-    try:
-        from ..security import get_current_user  # type: ignore
-        user = get_current_user  # type: ignore
-    except Exception:
-        pass
-    if callable(user):
-        # Resolve dependency style
-        return {"ok": True}
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+def me(user: models.User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email}
 

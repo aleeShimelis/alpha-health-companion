@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from .. import models
 from ..security import get_current_user
+from ..security import new_uuid
+from ..models_push import PushSubscription
+import json
 
 
 class ReminderPreview(BaseModel):
@@ -42,9 +45,23 @@ def add_subscription(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user)
 ):
-    # Stub: In the future, persist to a table and send pushes via Web Push.
     if not payload.endpoint:
         raise HTTPException(status_code=400, detail="endpoint required")
+    # Upsert by (user_id, endpoint)
+    existing = (
+        db.query(PushSubscription)
+        .filter(PushSubscription.user_id == user.id)
+        .filter(PushSubscription.endpoint == payload.endpoint)
+        .first()
+    )
+    if not existing:
+        rec = PushSubscription(
+            id=new_uuid(), user_id=user.id,
+            endpoint=payload.endpoint,
+            keys_json=(None if not payload.keys else json.dumps(payload.keys)),
+        )
+        db.add(rec)
+        db.commit()
     return PushSubscriptionOut(status="stored")
 
 

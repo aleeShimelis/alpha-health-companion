@@ -43,3 +43,40 @@ class GoalOut(GoalIn):
     id: str
     user_id: str
     created_at: datetime
+
+
+# Profile schemas
+class ProfileIn(BaseModel):
+    age: int | None = None
+    sex: str | None = None
+    height_cm: float | None = None
+    weight_kg: float | None = None
+    allergies: list[str] | None = None
+    conditions: list[str] | None = None
+    sleep_pref: str | None = None
+
+
+class ProfileOut(ProfileIn):
+    id: str
+    user_id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+# Symptom analysis schemas
+class SymptomAnalysisOut(BaseModel):
+    advice: list[str]
+    risk_flags: list[str]
+    disclaimer: str
+
+
+# Consent schemas
+class ConsentIn(BaseModel):
+    privacy_accepted: bool
+    marketing_opt_in: bool = False
+
+
+class ConsentOut(ConsentIn):
+    id: str
+    user_id: str
+    created_at: datetime

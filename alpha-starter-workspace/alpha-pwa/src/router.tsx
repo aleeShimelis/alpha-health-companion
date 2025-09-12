@@ -3,6 +3,9 @@ import Symptoms from './pages/SymptomsPage'
 import MedicationDecoderPage from './pages/MedicationDecoderPage'
 import GoalsPage from './pages/GoalsPage'
 import ReportsPage from './pages/ReportsPage'
+import ConsentPage from './pages/ConsentPage'
+import CyclesPage from './pages/CyclesPage'
+import SymptomAnalysisPage from './pages/SymptomAnalysisPage'
 
 
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -32,6 +35,9 @@ export default function AppRouter() {
         <Route path="/meds/decoder" element={<Protected><MedicationDecoderPage /></Protected>} />
         <Route path="/goals" element={<Protected><GoalsPage /></Protected>} />
         <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
+        <Route path="/consent" element={<Protected><ConsentPage /></Protected>} />
+        <Route path="/cycles" element={<Protected><CyclesPage /></Protected>} />
+        <Route path="/symptoms/analyze" element={<Protected><SymptomAnalysisPage /></Protected>} />
 
       </Routes>
     </AuthProvider>

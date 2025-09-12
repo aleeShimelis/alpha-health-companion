@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Boolean, Integer, Float, DateTime, ForeignKey, Text
+from sqlalchemy import String, Boolean, Integer, Float, DateTime, ForeignKey, Text, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 
 def utcnow() -> datetime: return datetime.utcnow()
@@ -10,7 +12,8 @@ def utcnow() -> datetime: return datetime.utcnow()
 
 class User(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255))
@@ -25,7 +28,8 @@ class User(Base):
 
 class HealthProfile(Base):
     __tablename__ = "health_profiles"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey(
         "users.id", ondelete="CASCADE"), unique=True, index=True)
     age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -45,7 +49,8 @@ class HealthProfile(Base):
 
 class Consent(Base):
     __tablename__ = "consents"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey(
         "users.id", ondelete="CASCADE"), index=True)
     privacy_accepted: Mapped[bool] = mapped_column(
@@ -58,7 +63,8 @@ class Consent(Base):
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[Optional[str]] = mapped_column(
         String(36), nullable=True, index=True)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -75,3 +81,5 @@ class AuditEvent(Base):
 
 from .models_symptoms import SymptomRecord  # noqa: F401,E402  (import at end by design)
 from .models_vitals import VitalRecord  # noqa: F401,E402  (import at end by design)
+from .models_push import PushSubscription  # noqa: F401,E402  (import at end by design)
+from .models_cycles import CycleEntry  # noqa: F401,E402  (import at end by design)

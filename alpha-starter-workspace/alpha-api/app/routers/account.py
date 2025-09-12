@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -49,6 +50,13 @@ def export_account(
         .limit(LIMIT)
         .all()
     )
+    consents = (
+        db.query(models.Consent)
+        .filter(models.Consent.user_id == user.id)
+        .order_by(models.Consent.created_at.desc())
+        .limit(LIMIT)
+        .all()
+    )
 
     def serialize_model(obj: Any) -> Dict[str, Any]:
         if obj is None:
@@ -64,8 +72,36 @@ def export_account(
         "vitals": [serialize_model(v) for v in vitals],
         "symptoms": [serialize_model(s) for s in symptoms],
         "goals": [serialize_model(g) for g in goals],
+        "consents": [serialize_model(c) for c in consents],
     }
-    return JSONResponse(content=payload, media_type="application/json")
+    return JSONResponse(content=jsonable_encoder(payload), media_type="application/json")
+
+
+@router.get("/audit")
+def list_audit(
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    limit = max(1, min(500, limit))
+    rows = (
+        db.query(models.AuditEvent)
+        .filter(models.AuditEvent.user_id == user.id)
+        .order_by(models.AuditEvent.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    out = []
+    for r in rows:
+        out.append({
+            "id": r.id,
+            "action": r.action,
+            "resource": r.resource,
+            "success": r.success,
+            "ip": r.ip,
+            "created_at": r.created_at,
+        })
+    return jsonable_encoder(out)
 
 
 class DeleteAccountIn(models.BaseModel if hasattr(models, 'BaseModel') else object):  # fallback if not using pydantic here

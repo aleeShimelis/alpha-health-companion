@@ -69,7 +69,8 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    user = db.query(models.User).get(sub)
+    # SQLAlchemy 2.0: use Session.get(Model, pk)
+    user = db.get(models.User, sub)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
