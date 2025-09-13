@@ -12,17 +12,28 @@ router = APIRouter()
 
 @router.post("", response_model=schemas.SymptomOut, status_code=201)
 def create_symptom(
-    payload: schemas.SymptomIn,
+    payload: dict | str = Body(...),
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user)
 ):
-    if not payload.description or not payload.description.strip():
+    # Robust body handling: accept dict or JSON string
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
+    try:
+        data = schemas.SymptomIn(**payload)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid request body")
+
+    if not data.description or not data.description.strip():
         raise HTTPException(status_code=400, detail="Description is required")
 
     rec = SymptomRecord(
         id=new_uuid(), user_id=user.id,
-        description=payload.description.strip(),
-        severity=payload.severity,
+        description=data.description.strip(),
+        severity=data.severity,
     )
     db.add(rec)
     db.commit()
