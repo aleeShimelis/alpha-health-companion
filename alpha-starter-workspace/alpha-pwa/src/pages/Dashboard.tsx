@@ -1,34 +1,50 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { showLocalTestNotification } from '../api/notifications'
 import { ensurePushSubscription, registerPushOnServer, listReminders, type ReminderOut } from '../api/reminders'
 import { useAuth } from '../auth/AuthContext'
-import { logout as apiLogout } from '../api/auth'
 import { useEffect, useState } from 'react'
 import { useToasts } from '../components/Toasts'
 
 export default function Dashboard(){
-  const nav = useNavigate()
-  const { token, setToken } = useAuth()
+  const { token } = useAuth()
   const { addToast } = useToasts()
   const [reminders, setReminders] = useState<ReminderOut[]>([])
   useEffect(() => { (async () => { try{ if(token){ const r = await listReminders(token); setReminders(r.slice(0,5)) } } catch{} })() }, [token])
   return (
     <div>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="toolbar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div className="brand-badge" />
-            <div>
-              <h2 style={{ margin: 0 }}>Welcome to ALPHA</h2>
-              <small>Your intelligent health companion for tracking, insights, and gentle guidance.</small>
+      <section className="hero" style={{ marginBottom: 16 }}>
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <div className="hero-badge-row">
+              <div className="brand-badge" />
+              <span className="badge">Welcome back</span>
+            </div>
+            <h1 className="hero-title">Welcome to ALPHA</h1>
+            <p className="hero-subtitle">Your intelligent health companion for tracking, insights, and gentle guidance.</p>
+            <div className="actions">
+              <Link
+                className="btn btn-primary cta"
+                to="/vitals"
+                onClick={(e) => {
+                  try{
+                    const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                    burstConfetti(Math.round(r.left + r.width/2), Math.round(r.top + r.height/2))
+                  } catch {}
+                }}
+              >
+                Quick Add Vitals
+              </Link>
+              <Link className="btn btn-secondary cta" to="/symptoms">Report Symptom</Link>
             </div>
           </div>
-          <div className="toolbar" style={{ gap: 8 }}>
-            <Link className="btn btn-primary" to="/vitals">Quick Add Vitals</Link>
-            <Link className="btn btn-secondary" to="/symptoms">Report Symptom</Link>
+          <div className="hero-art" aria-hidden="true">
+            <div className="hero-chip">🩺</div>
+            <div className="hero-chip">📊</div>
+            <div className="hero-chip">📝</div>
+            <div className="hero-chip">🔔</div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="grid auto-fit" style={{ marginBottom: 16 }}>
         <FeatureCard icon="🧍" title="Profile" desc="Manage your health profile, preferences, allergies and more." to="/profile" />
@@ -61,15 +77,23 @@ export default function Dashboard(){
             alert(String(e?.message || e))
           }
         }}>Register Push Reminders</button>
-        <button className="btn btn-secondary" onClick={async () => {
-          try {
-            const rt = localStorage.getItem('refresh_token')
-            if (rt) { await apiLogout(rt) }
-          } catch {}
-          try { localStorage.removeItem('token'); localStorage.removeItem('refresh_token') } catch {}
-          setToken(null)
-          nav('/login')
-        }}>Logout</button>
+          </div>
+        </div>
+        <div className="card">
+          <h3>Reports</h3>
+          <div className="toolbar" style={{ marginTop: 8 }}>
+            <button className="btn btn-primary" onClick={async () => {
+              if (!token) return
+              try {
+                const base = (import.meta as any).env.VITE_API_BASE || 'http://127.0.0.1:8001'
+                const period = 'week'
+                const res = await fetch(`${base}/reports/export?period=${period}`, { headers: { Authorization: `Bearer ${token}` } })
+                if (!res.ok) throw new Error(await res.text())
+                const blob = await res.blob(); const url = URL.createObjectURL(blob)
+                const a = document.createElement('a'); a.href = url; a.download = `alpha-summary-${period}.md`; a.click(); URL.revokeObjectURL(url)
+                addToast('Weekly report downloaded', 'success')
+              } catch(e:any){ addToast(String(e?.message||'Failed to download'), 'error') }
+            }}>Download Weekly Report</button>
           </div>
         </div>
         <div className="card">
@@ -84,18 +108,6 @@ export default function Dashboard(){
           )}
           <div className="toolbar" style={{ marginTop: 8 }}>
             <Link className="btn" to="/reminders">Manage</Link>
-            <button className="btn btn-primary" onClick={async () => {
-              if (!token) return
-              try {
-                const base = (import.meta as any).env.VITE_API_BASE || 'http://127.0.0.1:8001'
-                const period = 'week'
-                const res = await fetch(`${base}/reports/export?period=${period}`, { headers: { Authorization: `Bearer ${token}` } })
-                if (!res.ok) throw new Error(await res.text())
-                const blob = await res.blob(); const url = URL.createObjectURL(blob)
-                const a = document.createElement('a'); a.href = url; a.download = `alpha-summary-${period}.md`; a.click(); URL.revokeObjectURL(url)
-                addToast('Weekly report downloaded', 'success')
-              } catch(e:any){ addToast(String(e?.message||'Failed to download'), 'error') }
-            }}>Download Weekly Report</button>
           </div>
         </div>
       </div>
@@ -118,5 +130,28 @@ function FeatureCard({ icon, title, desc, to }: { icon: string; title: string; d
       </div>
     </div>
   )
+}
+
+// Lightweight confetti burst without deps; attaches elements to body and cleans up.
+function burstConfetti(x: number, y: number, count = 18){
+  const colors = [0, 25, 45, 200, 215, 260, 140]
+  for(let i=0;i<count;i++){
+    const el = document.createElement('span')
+    el.className = 'confetti'
+    const dx = Math.round((Math.random() * 2 - 1) * 140)
+    const dy = Math.round(-60 - Math.random() * 160)
+    const rot = Math.round((Math.random() * 2 - 1) * 360)
+    const hue = colors[Math.floor(Math.random()*colors.length)] + Math.round((Math.random()*20)-10)
+    const dur = 700 + Math.round(Math.random() * 500)
+    el.style.left = `${x}px`
+    el.style.top = `${y}px`
+    el.style.color = `hsl(${hue}, 95%, 60%)`
+    el.style.setProperty('--dx', `${dx}px`)
+    el.style.setProperty('--dy', `${dy}px`)
+    el.style.setProperty('--rot', `${rot}deg`)
+    el.style.setProperty('--dur', `${dur}ms`)
+    document.body.appendChild(el)
+    window.setTimeout(() => { el.remove() }, dur + 60)
+  }
 }
 

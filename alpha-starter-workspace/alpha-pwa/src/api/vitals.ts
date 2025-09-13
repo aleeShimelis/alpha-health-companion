@@ -32,3 +32,18 @@ export async function listVitals(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   })
 }
+
+export async function updateVital(token: string, id: string, body: VitalIn) {
+  return api<VitalOut>(`/vitals/${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteVital(token: string, id: string) {
+  return api<null>(`/vitals/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}

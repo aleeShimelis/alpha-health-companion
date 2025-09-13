@@ -190,6 +190,7 @@ def send_now(
 class ReminderIn(BaseModel):
     message: str
     scheduled_at: datetime
+    recurrence: str | None = None  # none|daily|weekly
 
 
 class ReminderOut(ReminderIn):
@@ -204,7 +205,7 @@ def schedule_reminder(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user)
 ):
-    rec = Reminder(id=new_uuid(), user_id=user.id, message=payload.message, scheduled_at=payload.scheduled_at)
+    rec = Reminder(id=new_uuid(), user_id=user.id, message=payload.message, scheduled_at=payload.scheduled_at, recurrence=payload.recurrence)
     db.add(rec)
     db.commit()
     db.refresh(rec)
@@ -241,5 +242,27 @@ def delete_reminder(
     if not deleted:
         raise HTTPException(status_code=404, detail="Reminder not found")
     return
+
+
+@router.put("/{reminder_id}", response_model=ReminderOut)
+def update_reminder(
+    reminder_id: str,
+    payload: ReminderIn,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    rec = (
+        db.query(Reminder)
+        .filter(Reminder.id == reminder_id, Reminder.user_id == user.id)
+        .first()
+    )
+    if not rec:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+    rec.message = payload.message
+    rec.scheduled_at = payload.scheduled_at
+    rec.recurrence = payload.recurrence
+    db.commit()
+    db.refresh(rec)
+    return ReminderOut(id=rec.id, user_id=rec.user_id, message=rec.message, scheduled_at=rec.scheduled_at, sent_at=rec.sent_at, recurrence=rec.recurrence)
 
 

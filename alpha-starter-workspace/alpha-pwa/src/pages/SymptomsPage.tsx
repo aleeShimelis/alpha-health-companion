@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
-import { createSymptom, listSymptoms, SymptomIn, SymptomOut, analyzeSymptom, type SymptomAnalysisOut } from '../api/symptoms'
+import { createSymptom, listSymptoms, updateSymptom, deleteSymptom, SymptomIn, SymptomOut, analyzeSymptom, type SymptomAnalysisOut } from '../api/symptoms'
 import Modal from '../components/Modal'
 
 export default function Symptoms() {
@@ -13,6 +13,10 @@ export default function Symptoms() {
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
   const [analysisFor, setAnalysisFor] = useState<SymptomOut | null>(null)
   const [analysis, setAnalysis] = useState<SymptomAnalysisOut | null>(null)
+  const [edit, setEdit] = useState<SymptomOut | null>(null)
+  const [editDesc, setEditDesc] = useState('')
+  const [editSev, setEditSev] = useState<''|'mild'|'moderate'|'severe'>('')
+  const [toDelete, setToDelete] = useState<SymptomOut | null>(null)
 
   async function refresh() {
     if (!token) return
@@ -98,6 +102,8 @@ export default function Symptoms() {
                     {analyzingId === it.id && <span className="spinner" style={{ marginRight: 8 }} />}
                     {analyzingId === it.id ? 'Analyzing...' : 'Analyze'}
                   </button>
+                  <button className="btn" style={{ marginLeft: 6 }} onClick={() => { setEdit(it); setEditDesc(it.description); setEditSev((it.severity as any) || '') }}>Edit</button>
+                  <button className="btn btn-danger" style={{ marginLeft: 6 }} onClick={() => setToDelete(it)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -127,6 +133,31 @@ export default function Symptoms() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal open={!!edit} title="Edit symptom" onClose={() => setEdit(null)} onConfirm={async () => {
+        if (!token || !edit) return
+        try{
+          const updated = await updateSymptom(token, edit.id, { description: editDesc.trim(), severity: editSev || null } as any)
+          setItems(items.map(i => i.id===edit.id ? updated : i))
+        } finally { setEdit(null) }
+      }} confirmText="Save">
+        <div className="stack gap-2">
+          <textarea className="textarea" value={editDesc} onChange={e=>setEditDesc(e.target.value)} />
+          <select className="select" value={editSev} onChange={e=>setEditSev(e.target.value as any)}>
+            <option value="">Severity (optional)</option>
+            <option value="mild">mild</option>
+            <option value="moderate">moderate</option>
+            <option value="severe">severe</option>
+          </select>
+        </div>
+      </Modal>
+
+      <Modal open={!!toDelete} title="Delete symptom" onClose={() => setToDelete(null)} onConfirm={async () => {
+        if (!token || !toDelete) return
+        try{ await deleteSymptom(token, toDelete.id); setItems(items.filter(i => i.id!==toDelete.id)) } finally { setToDelete(null) }
+      }} confirmText="Delete">
+        Are you sure you want to delete this symptom from {toDelete ? new Date(toDelete.created_at).toLocaleString() : ''}?
       </Modal>
     </div>
   )

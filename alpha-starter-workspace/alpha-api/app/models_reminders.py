@@ -14,5 +14,5 @@ class Reminder(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     scheduled_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    recurrence: Mapped[str | None] = mapped_column(String(16), nullable=True)  # none|daily|weekly
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
-

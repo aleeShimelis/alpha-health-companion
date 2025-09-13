@@ -14,6 +14,7 @@ export default function RemindersPage(){
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [toDelete, setToDelete] = useState<ReminderOut | null>(null)
+  const [recurrence, setRecurrence] = useState<''|'daily'|'weekly'>('')
 
   async function load(){
     if(!token) return
@@ -27,9 +28,9 @@ export default function RemindersPage(){
     setLoading(true)
     try{
       const iso = when ? new Date(when).toISOString() : new Date().toISOString()
-      const r = await scheduleReminder(token, { message: message.trim(), scheduled_at: iso })
+      const r = await scheduleReminder(token, { message: message.trim(), scheduled_at: iso, recurrence: recurrence || (null as any) })
       setItems([r, ...items])
-      setMessage(''); setWhen('')
+      setMessage(''); setWhen(''); setRecurrence('')
       addToast('Reminder scheduled', 'success')
     } catch(e:any){ setError(String(e?.message||'Failed to schedule')) }
     finally { setLoading(false) }
@@ -42,6 +43,11 @@ export default function RemindersPage(){
         <form onSubmit={create} className="toolbar" style={{ flexWrap:'wrap' }}>
           <input className="input" placeholder="Message" value={message} onChange={e=>setMessage(e.target.value)} />
           <input className="input" type="datetime-local" value={when} onChange={e=>setWhen(e.target.value)} />
+          <select className="select" value={recurrence} onChange={e=>setRecurrence(e.target.value as any)}>
+            <option value="">one-time</option>
+            <option value="daily">daily</option>
+            <option value="weekly">weekly</option>
+          </select>
           <button className="btn btn-primary" disabled={loading}>
             {loading && <span className="spinner" style={{ marginRight: 8 }} />}
             {loading? 'Scheduling...' : 'Schedule'}

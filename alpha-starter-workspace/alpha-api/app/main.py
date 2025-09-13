@@ -132,7 +132,12 @@ async def start_reminder_dispatcher():
                                     )
                                 except Exception:
                                     pass
+                            # mark sent; if recurring, reschedule next occurrence
                             r.sent_at = datetime.utcnow()
+                            if r.recurrence in ("daily","weekly"):
+                                days = 1 if r.recurrence == "daily" else 7
+                                r.scheduled_at = r.scheduled_at + timedelta(days=days)
+                                r.sent_at = None
                             db.commit()
                         except Exception:
                             db.rollback()

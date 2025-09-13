@@ -42,4 +42,19 @@ export async function analyzeSymptom(token: string, body: SymptomIn) {
   })
 }
 
+export async function updateSymptom(token: string, id: string, body: SymptomIn) {
+  return api<SymptomOut>(`/symptoms/${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteSymptom(token: string, id: string) {
+  return api<null>(`/symptoms/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
 

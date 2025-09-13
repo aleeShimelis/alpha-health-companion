@@ -119,3 +119,53 @@ def list_vitals(
             glucose_flag=flag_glucose(rec.glucose_mgdl),
         ))
     return out
+
+
+@router.put("/{vital_id}", response_model=schemas.VitalOut)
+def update_vital(
+    vital_id: str,
+    payload: schemas.VitalIn,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    rec = (
+        db.query(VitalRecord)
+        .filter(VitalRecord.id == vital_id, VitalRecord.user_id == user.id)
+        .first()
+    )
+    if not rec:
+        raise HTTPException(status_code=404, detail="Vital not found")
+    # Update only provided fields
+    for field in ["systolic","diastolic","heart_rate","temperature_c","glucose_mgdl","weight_kg"]:
+        val = getattr(payload, field)
+        if val is not None:
+            setattr(rec, field, val)
+    db.commit()
+    db.refresh(rec)
+    return schemas.VitalOut(
+        id=rec.id, user_id=rec.user_id, created_at=rec.created_at,
+        systolic=rec.systolic, diastolic=rec.diastolic,
+        heart_rate=rec.heart_rate, temperature_c=rec.temperature_c,
+        glucose_mgdl=rec.glucose_mgdl, weight_kg=rec.weight_kg,
+        bp_flag=flag_bp(rec.systolic, rec.diastolic),
+        hr_flag=flag_hr(rec.heart_rate),
+        temp_flag=flag_temp(rec.temperature_c),
+        glucose_flag=flag_glucose(rec.glucose_mgdl),
+    )
+
+
+@router.delete("/{vital_id}", status_code=204)
+def delete_vital(
+    vital_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    deleted = (
+        db.query(VitalRecord)
+        .filter(VitalRecord.id == vital_id, VitalRecord.user_id == user.id)
+        .delete(synchronize_session=False)
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Vital not found")
+    db.commit()
+    return

@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import { logout as apiLogout } from '../api/auth'
 import { API_BASE } from '../api/config'
 import Footer from './Footer'
+import ThemeToggle from './ThemeToggle'
 
 export default function AppShell({ children }: { children: React.ReactNode }){
   const { token, setToken } = useAuth()
@@ -41,10 +42,17 @@ export default function AppShell({ children }: { children: React.ReactNode }){
           <nav className="nav" style={{ width: '100%', justifyContent:'space-between' }}>
             <div />
             <div className="nav" style={{ gap: 8, position: 'relative' }}>
+              <ThemeToggle />
               {userEmail && <span className="badge">{userEmail}</span>}
-              <NavLink to="/profile" className="btn btn-secondary">Profile</NavLink>
-              <button className="btn" onClick={() => setOpenMenu(v=>!v)} aria-haspopup>
-                Account ▾
+              <button
+                className="icon-btn"
+                onClick={() => setOpenMenu(v=>!v)}
+                aria-haspopup="menu"
+                aria-label="Account menu"
+                aria-expanded={openMenu}
+                title="Account"
+              >
+                <span aria-hidden="true">👤</span>
               </button>
               {openMenu && (
                 <div className="dropdown" onMouseLeave={() => setOpenMenu(false)}>

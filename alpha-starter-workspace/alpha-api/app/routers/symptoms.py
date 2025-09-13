@@ -66,6 +66,54 @@ def list_symptoms(
     return out
 
 
+@router.put("/{symptom_id}", response_model=schemas.SymptomOut)
+def update_symptom(
+    symptom_id: str,
+    payload: dict | str = Body(...),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
+    try:
+        data = schemas.SymptomIn(**payload)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid request body")
+    rec = (
+        db.query(SymptomRecord)
+        .filter(SymptomRecord.id == symptom_id, SymptomRecord.user_id == user.id)
+        .first()
+    )
+    if not rec:
+        raise HTTPException(status_code=404, detail="Symptom not found")
+    if data.description:
+        rec.description = data.description.strip()
+    rec.severity = data.severity
+    db.commit()
+    db.refresh(rec)
+    return schemas.SymptomOut(id=rec.id, user_id=rec.user_id, created_at=rec.created_at, description=rec.description, severity=rec.severity)
+
+
+@router.delete("/{symptom_id}", status_code=204)
+def delete_symptom(
+    symptom_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    deleted = (
+        db.query(SymptomRecord)
+        .filter(SymptomRecord.id == symptom_id, SymptomRecord.user_id == user.id)
+        .delete(synchronize_session=False)
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Symptom not found")
+    db.commit()
+    return
+
+
 @router.post("/analyze", response_model=schemas.SymptomAnalysisOut)
 def analyze_symptom(
     payload: dict | str = Body(...),

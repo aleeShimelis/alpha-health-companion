@@ -17,6 +17,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -97,3 +98,4 @@ from .models_cycles import CycleEntry  # noqa: F401,E402  (import at end by desi
 from .models_password_reset import PasswordReset  # noqa: F401,E402  (import at end by design)
 from .models_refresh import RefreshToken  # noqa: F401,E402  (import at end by design)
 from .models_reminders import Reminder  # noqa: F401,E402  (import at end by design)
+from .models_email_verification import EmailVerification  # noqa: F401,E402  (import at end by design)

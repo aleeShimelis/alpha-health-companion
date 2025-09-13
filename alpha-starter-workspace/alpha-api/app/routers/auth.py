@@ -12,6 +12,7 @@ from ..security import new_uuid
 from datetime import datetime, timedelta, timezone
 import secrets
 from ..services import emailer
+from ..models_email_verification import EmailVerification
 
 
 router = APIRouter()
@@ -151,6 +152,55 @@ def password_reset(payload: PasswordResetConfirmIn, db: Session = Depends(get_db
     db.commit()
     return
 
+
+class EmailVerifyRequestIn(BaseModel):
+    email: EmailStr
+
+
+@router.post("/email/verify/request", status_code=status.HTTP_204_NO_CONTENT)
+def email_verify_request(payload: EmailVerifyRequestIn, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user:
+        return
+    token = secrets.token_urlsafe(32)
+    expires = datetime.now(timezone.utc) + timedelta(hours=24)
+    rec = EmailVerification(id=new_uuid(), user_id=user.id, token=token, expires_at=expires, used=False)
+    db.add(rec)
+    db.commit()
+    verify_url = f"https://example.com/verify?token={token}"
+    emailer.send_text(to=user.email, subject="Verify your ALPHA email", body=(
+        "Thanks for signing up for ALPHA.\n\n"
+        f"Use this token to verify your email: {token}\n"
+        f"Or open: {verify_url}\n\n"
+        "If you didn't request this, you can ignore this email."
+    ))
+    return
+
+
+class EmailVerifyConfirmIn(BaseModel):
+    token: str
+
+
+@router.post("/email/verify/confirm", status_code=status.HTTP_204_NO_CONTENT)
+def email_verify_confirm(payload: EmailVerifyConfirmIn, db: Session = Depends(get_db)):
+    rec = (
+        db.query(EmailVerification)
+        .filter(EmailVerification.token == payload.token)
+        .first()
+    )
+    if not rec or rec.used:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    now = datetime.now(timezone.utc)
+    if rec.expires_at.replace(tzinfo=timezone.utc) < now:
+        raise HTTPException(status_code=400, detail="Token expired")
+    user = db.get(models.User, rec.user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    user.email_verified = True
+    rec.used = True
+    db.commit()
+    return
+
 def _issue_refresh_token(db: Session, user_id: str) -> str:
     from ..config import settings
     from datetime import datetime, timedelta, timezone
@@ -206,4 +256,22 @@ def logout(payload: LogoutIn, db: Session = Depends(get_db)):
     if rec:
         rec.revoked = True
         db.commit()
+    return
+
+
+class PasswordChangeIn(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/password/change", status_code=status.HTTP_204_NO_CONTENT)
+def password_change(
+    payload: PasswordChangeIn,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user)
+):
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    user.password_hash = hash_password(payload.new_password)
+    db.commit()
     return
