@@ -77,21 +77,30 @@ class LlmClient:
         )
         if not client:
             tips: List[str] = []
+            causes: List[str] = []
+            implications: List[str] = []
             d = description.lower()
             if "fever" in d:
                 tips.append("Hydrate and rest; monitor temperature.")
+                causes.append("Possible viral or bacterial infection")
+                implications.append("Watch for dehydration and prolonged high temperature")
             if "headache" in d:
                 tips.append("Consider rest, hydration, and a calm environment.")
+                causes.append("Tension or migraine; dehydration")
+                implications.append("If sudden severe headache, seek care")
+            if "chest pain" in d or "shortness of breath" in d:
+                implications.append("Could be urgent; consider immediate care if severe or new")
+                causes.append("Muscle strain, respiratory issues; cardiac cause cannot be excluded")
             if (severity or "").lower() == "severe":
                 tips.append("If symptoms worsen or persist, seek medical care.")
-            return {"advice": tips or ["Monitor symptoms and seek care if they worsen."], "risk_flags": [], "disclaimer": disclaimer}
+            return {"advice": tips or ["Monitor symptoms and seek care if they worsen."], "risk_flags": [], "causes": causes, "implications": implications, "disclaimer": disclaimer}
         try:
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": (
-                        "You are a non-clinical symptom assistant. Provide general wellness advice and potential risk flags. "
-                        "DO NOT diagnose. Avoid clinical instructions. Return JSON with keys: advice (array), risk_flags (array), disclaimer."
+                        "You are a non-clinical symptom assistant. Provide general wellness advice, potential causes and implications, and risk flags. "
+                        "DO NOT diagnose. Avoid clinical instructions. Return JSON with keys: advice (array), causes (array), implications (array), risk_flags (array), disclaimer."
                     )},
                     {"role": "user", "content": f"Description: {description}. Severity: {severity or ''}"},
                 ],
@@ -105,9 +114,11 @@ class LlmClient:
             # Normalize shapes
             data["advice"] = list(data.get("advice") or [])
             data["risk_flags"] = list(data.get("risk_flags") or [])
+            data["causes"] = list(data.get("causes") or [])
+            data["implications"] = list(data.get("implications") or [])
             return data
         except Exception:
-            return {"advice": ["Monitor symptoms and seek care if they worsen."], "risk_flags": [], "disclaimer": disclaimer}
+            return {"advice": ["Monitor symptoms and seek care if they worsen."], "risk_flags": [], "causes": [], "implications": [], "disclaimer": disclaimer}
 
 
 llm_client = LlmClient()

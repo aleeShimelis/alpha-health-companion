@@ -86,6 +86,8 @@ class ProfileOut(ProfileIn):
 class SymptomAnalysisOut(BaseModel):
     advice: list[str]
     risk_flags: list[str]
+    causes: list[str] = []
+    implications: list[str] = []
     disclaimer: str
 
 

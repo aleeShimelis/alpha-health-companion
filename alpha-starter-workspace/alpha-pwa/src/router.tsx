@@ -7,6 +7,7 @@ import ConsentPage from './pages/ConsentPage'
 import CyclesPage from './pages/CyclesPage'
 import SymptomAnalysisPage from './pages/SymptomAnalysisPage'
 import RemindersPage from './pages/RemindersPage'
+import AccountPage from './pages/AccountPage'
 
 
 import { Navigate, createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom'
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
     { path: 'consent', element: <Protected><ConsentPage /></Protected> },
     { path: 'cycles', element: <Protected><CyclesPage /></Protected> },
     { path: 'reminders', element: <Protected><RemindersPage /></Protected> },
+    { path: 'account', element: <Protected><AccountPage /></Protected> },
     { path: '*', element: <NotFound /> },
   ]}
 ], {

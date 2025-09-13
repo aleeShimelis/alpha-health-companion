@@ -100,6 +100,8 @@ def analyze_symptom(
     if "headache" in description:
         advice.append("Consider rest, hydration, and a calm environment.")
 
+    causes: list[str] = []
+    implications: list[str] = []
     if llm_client.is_configured():
         try:
             llm = llm_client.analyzeSymptoms(data.description, data.severity if isinstance(data.severity, str) else None)
@@ -108,8 +110,18 @@ def analyze_symptom(
                     advice.append(a)
             for rf in (llm.get("risk_flags") or []):
                 risk_flags.append(str(rf))
+            causes = list(llm.get("causes") or [])
+            implications = list(llm.get("implications") or [])
         except Exception:
             pass
+    else:
+        # basic heuristics
+        if "fever" in description:
+            causes.append("Possible viral or bacterial infection")
+            implications.append("Monitor hydration and temperature; prolonged high fever warrants care")
+        if "headache" in description:
+            causes.append("Tension, migraine, or dehydration")
+            implications.append("If sudden and severe, seek care")
 
     disclaimer = (
         "General, non-clinical guidance only. Not a diagnosis. "
@@ -123,4 +135,4 @@ def analyze_symptom(
             seen.add(a)
             deduped.append(a)
 
-    return schemas.SymptomAnalysisOut(advice=deduped, risk_flags=sorted(set(risk_flags)), disclaimer=disclaimer)
+    return schemas.SymptomAnalysisOut(advice=deduped, risk_flags=sorted(set(risk_flags)), causes=causes, implications=implications, disclaimer=disclaimer)

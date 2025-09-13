@@ -29,6 +29,8 @@ export async function listSymptoms(token: string) {
 export type SymptomAnalysisOut = {
   advice: string[]
   risk_flags: string[]
+  causes: string[]
+  implications: string[]
   disclaimer: string
 }
 
