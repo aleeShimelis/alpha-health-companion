@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function Register() {
   const nav = useNavigate()
+  const { setToken } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [privacy, setPrivacy] = useState(true)
@@ -15,34 +17,37 @@ export default function Register() {
     e.preventDefault()
     setErr(null)
     try {
-      await api('/auth/register', {
+      const res = await api<{ access_token: string; refresh_token?: string }>('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({
-          email, password, consent_privacy: privacy, consent_marketing: marketing
-        }),
+        body: JSON.stringify({ email, password, consent_privacy: privacy, consent_marketing: marketing }),
       })
+      setToken(res.access_token)
+      if (res.refresh_token) localStorage.setItem('refresh_token', res.refresh_token)
       setOk(true)
-      setTimeout(() => nav('/login'), 1000)
+      nav('/dashboard')
     } catch (e:any) {
       setErr(e.message || 'Register failed')
     }
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '60px auto', fontFamily: 'sans-serif' }}>
-      <h2>Register</h2>
-      <form onSubmit={onSubmit}>
-        <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{display:'block', width:'100%', marginBottom:8}} />
-        <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} style={{display:'block', width:'100%', marginBottom:8}} />
-        <label><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)} /> Accept privacy policy</label><br/>
-        <label><input type="checkbox" checked={marketing} onChange={e=>setMarketing(e.target.checked)} /> Marketing opt-in</label><br/>
-        <button type="submit">Create account</button>
-      </form>
-      {ok && <div style={{color:'green', marginTop:8}}>Account created! Redirecting…</div>}
-      {err && <div style={{color:'red', marginTop:8}}>{err}</div>}
-      <div style={{marginTop:12}}>
-        Have an account? <Link to="/login">Login</Link>
+    <div className="container" style={{ maxWidth: 520 }}>
+      <div className="card">
+        <h2>Create your account</h2>
+        <form onSubmit={onSubmit} className="stack gap-3">
+          <input className="input" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
+          <input className="input" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+          <label><input type="checkbox" checked={privacy} onChange={e=>setPrivacy(e.target.checked)} /> Accept privacy policy</label>
+          <label><input type="checkbox" checked={marketing} onChange={e=>setMarketing(e.target.checked)} /> Marketing opt-in</label>
+          <button type="submit" className="btn btn-primary">Create account</button>
+        </form>
+        {ok && <div style={{color:'#28c76f', marginTop:8}}>Account created!</div>}
+        {err && <div style={{color:'#ff6b6b', marginTop:8}}>{err}</div>}
+        <div style={{marginTop:12}}>
+          Have an account? <Link to="/login">Login</Link>
+        </div>
       </div>
     </div>
   )
 }
+

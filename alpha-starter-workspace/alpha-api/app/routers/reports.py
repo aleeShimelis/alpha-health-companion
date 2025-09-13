@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -200,3 +201,14 @@ def get_summary(
     )
 
 
+@router.get("/export")
+def export_report(
+    period: Literal["week", "month"] = Query("week"),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    data = get_summary(period=period, db=db, user=user)
+    filename = f"alpha-summary-{period}.md"
+    resp = PlainTextResponse(content=data.markdown, media_type="text/markdown; charset=utf-8")
+    resp.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return resp

@@ -36,7 +36,9 @@ def run():
     password = "pass1234"
     r = client.post("/auth/register", json={"email": email, "password": password})
     if r.status_code == 201:
-        token = r.json()["access_token"]
+        resp = r.json()
+        token = resp["access_token"]
+        refresh = resp.get("refresh_token")
     elif r.status_code == 400 and "already registered" in r.text:
         pass
     else:
@@ -45,12 +47,21 @@ def run():
     # 3) Login
     r = client.post("/auth/login", json={"email": email, "password": password})
     must_ok(r)
-    token = r.json()["access_token"]
+    resp = r.json()
+    token = resp["access_token"]
+    refresh = resp.get("refresh_token")
 
     # 4) /auth/me
     r = client.get("/auth/me", headers=auth_headers(token))
     must_ok(r)
     assert r.json().get("email") == email
+
+    # 4a) refresh token flow
+    if refresh:
+        r = client.post("/auth/refresh", json={"refresh_token": refresh})
+        must_ok(r)
+        new_access = r.json()["access_token"]
+        assert isinstance(new_access, str)
 
     # 5) Profiles GET/PUT
     r = client.get("/profiles/me", headers=auth_headers(token))

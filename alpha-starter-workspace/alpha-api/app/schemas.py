@@ -44,6 +44,25 @@ class GoalOut(GoalIn):
     user_id: str
     created_at: datetime
 
+class GoalUpdateIn(BaseModel):
+    category: str | None = None
+    target_value: str | None = None
+    cadence: str | None = None
+
+
+class GoalProgressIn(BaseModel):
+    value: str = Field(min_length=1, max_length=2000)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class GoalProgressOut(BaseModel):
+    id: str
+    goal_id: str
+    user_id: str
+    value: str
+    note: str | None = None
+    created_at: datetime
+
 
 # Profile schemas
 class ProfileIn(BaseModel):

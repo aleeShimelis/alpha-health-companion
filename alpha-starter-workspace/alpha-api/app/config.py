@@ -25,8 +25,19 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALG: str
     JWT_EXPIRE_MINUTES: int
+    REFRESH_EXPIRE_DAYS: int = 7
     # ---- LLM (optional) ----
     OPENAI_API_KEY: Optional[str] = None
+    # ---- Web Push (optional) ----
+    VAPID_PUBLIC_KEY: Optional[str] = None
+    VAPID_PRIVATE_KEY: Optional[str] = None
+    VAPID_EMAIL: Optional[str] = None  # used in VAPID 'sub' (mailto:...)
+    # ---- Email (optional) ----
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = None
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
     # ---- CORS (dev defaults) ----
     # Accept either JSON list string or comma-separated string for convenience
     CORS_ORIGINS: Union[List[str], str] = []

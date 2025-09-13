@@ -5,6 +5,12 @@ from .db import Base, engine
 import os
 from .routers import auth, profiles, vitals, symptoms, goals, reports, meds, account, reminders
 from .routers import cycles, consent
+import asyncio
+from datetime import datetime
+import json as _json
+from .models_reminders import Reminder
+from .models_push import PushSubscription
+from .routers.reminders import webpush, WebPushException
 from .config import settings
 from . import models
 from .db import SessionLocal
@@ -89,3 +95,51 @@ def healthz():
 # from .routers import auth, profiles, vitals, symptoms, goals, reports, meds, account
 # app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 # ...
+
+
+@app.on_event("startup")
+async def start_reminder_dispatcher():
+    async def dispatcher():
+        while True:
+            try:
+                now = datetime.utcnow()
+                db = SessionLocal()
+                try:
+                    rows = (
+                        db.query(Reminder)
+                        .filter(Reminder.sent_at.is_(None))
+                        .filter(Reminder.scheduled_at <= now)
+                        .limit(20)
+                        .all()
+                    )
+                    for r in rows:
+                        try:
+                            subs = (
+                                db.query(PushSubscription)
+                                .filter(PushSubscription.user_id == r.user_id)
+                                .all()
+                            )
+                            for s in subs:
+                                if not webpush:
+                                    break
+                                try:
+                                    keys = _json.loads(s.keys_json) if s.keys_json else {}
+                                    webpush(
+                                        subscription_info={"endpoint": s.endpoint, "keys": keys},
+                                        data=_json.dumps({"title": "ALPHA Reminder", "body": r.message}),
+                                        vapid_private_key=settings.VAPID_PRIVATE_KEY,
+                                        vapid_claims={"sub": f"mailto:{settings.VAPID_EMAIL}"},
+                                    )
+                                except Exception:
+                                    pass
+                            r.sent_at = datetime.utcnow()
+                            db.commit()
+                        except Exception:
+                            db.rollback()
+                finally:
+                    db.close()
+            except Exception:
+                pass
+            await asyncio.sleep(60)
+
+    asyncio.create_task(dispatcher())

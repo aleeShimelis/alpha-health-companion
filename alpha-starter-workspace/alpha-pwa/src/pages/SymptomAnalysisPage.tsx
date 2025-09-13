@@ -22,28 +22,35 @@ export default function SymptomAnalysisPage(){
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'sans-serif' }}>
-      <h2>Symptom Analysis (Non‑diagnostic)</h2>
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
-        <textarea required placeholder="Describe your symptom" value={description} onChange={e=>setDescription(e.target.value)} />
-        <select value={severity} onChange={e=>setSeverity(e.target.value as any)}>
-          <option value="">Severity (optional)</option>
-          <option value="mild">mild</option>
-          <option value="moderate">moderate</option>
-          <option value="severe">severe</option>
-        </select>
-        <button type="submit" disabled={loading}>{loading ? 'Analyzing.' : 'Analyze'}</button>
-      </form>
-      {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
+    <div className="container">
+      <div className="card" style={{ maxWidth: 640 }}>
+        <h2>Symptom Analysis (Non‑diagnostic)</h2>
+        <form onSubmit={onSubmit} className="stack gap-3">
+          <textarea className="textarea" required placeholder="Describe your symptom" value={description} onChange={e=>setDescription(e.target.value)} />
+          <select className="select" value={severity} onChange={e=>setSeverity(e.target.value as any)}>
+            <option value="">Severity (optional)</option>
+            <option value="mild">mild</option>
+            <option value="moderate">moderate</option>
+            <option value="severe">severe</option>
+          </select>
+          <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Analyzing.' : 'Analyze'}</button>
+          {error && <div className="badge danger">{error}</div>}
+        </form>
+      </div>
 
       {data && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Advice</h3>
-          <ul>
-            {data.advice.map((a,i)=>(<li key={i}>{a}</li>))}
-          </ul>
-          <div><strong>Flags:</strong> {data.risk_flags.join(', ') || 'none'}</div>
-          <div style={{ marginTop: 12, padding: 12, border: '1px solid #f99', background: '#fff7f7', borderRadius: 6 }}>
+        <div className="grid auto-fit" style={{ marginTop: 16 }}>
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Advice</h3>
+            <ul>
+              {data.advice.map((a,i)=>(<li key={i}>{a}</li>))}
+            </ul>
+          </div>
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Flags</h3>
+            <div>{data.risk_flags.join(', ') || 'none'}</div>
+          </div>
+          <div className="card" style={{ borderColor:'#f99' }}>
             <strong>Disclaimer</strong>
             <p style={{ margin: 0 }}>{data.disclaimer}</p>
           </div>
@@ -52,4 +59,3 @@ export default function SymptomAnalysisPage(){
     </div>
   )
 }
-

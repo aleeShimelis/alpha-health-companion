@@ -126,10 +126,27 @@ def upgrade() -> None:
     )
     op.create_index('ix_cycle_entries_user_id', 'cycle_entries', ['user_id'])
 
+    # password_resets
+    op.create_table(
+        'password_resets',
+        sa.Column('id', sa.String(length=36), primary_key=True),
+        sa.Column('user_id', sa.String(length=36), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('token', sa.String(length=255), nullable=False),
+        sa.Column('expires_at', sa.DateTime(), nullable=False),
+        sa.Column('used', sa.Boolean(), nullable=False),
+        sa.Column('created_at', sa.DateTime(), nullable=False),
+    )
+    op.create_index('ix_password_resets_user_id', 'password_resets', ['user_id'])
+    op.create_index('ix_password_resets_token', 'password_resets', ['token'], unique=True)
+
 
 def downgrade() -> None:
     op.drop_index('ix_cycle_entries_user_id', table_name='cycle_entries')
     op.drop_table('cycle_entries')
+
+    op.drop_index('ix_password_resets_token', table_name='password_resets')
+    op.drop_index('ix_password_resets_user_id', table_name='password_resets')
+    op.drop_table('password_resets')
 
     op.drop_constraint('uq_user_endpoint', 'push_subscriptions', type_='unique')
     op.drop_index('ix_push_subscriptions_user_id', table_name='push_subscriptions')

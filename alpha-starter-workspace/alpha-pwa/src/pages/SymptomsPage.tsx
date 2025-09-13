@@ -8,6 +8,7 @@ export default function Symptoms() {
   const [description, setDescription] = useState('')
   const [severity, setSeverity] = useState<'' | 'mild' | 'moderate' | 'severe'>('')
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   async function refresh() {
     if (!token) return
@@ -26,6 +27,7 @@ export default function Symptoms() {
     if (!token) return
     setError(null)
     try {
+      setSaving(true)
       const payload: SymptomIn = {
         description: description.trim(),
         severity: severity === '' ? null : severity,
@@ -35,38 +37,46 @@ export default function Symptoms() {
       setSeverity('')
       // onset_at is not persisted on backend currently
       refresh()
-    } catch (e: any) {
-      setError(e.message)
-    }
+    } catch (e: any) { setError(e.message) }
+    finally { setSaving(false) }
   }
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Symptoms</h2>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 8, maxWidth: 480 }}>
-        <textarea placeholder="Describe your symptom"
-          value={description} onChange={e => setDescription(e.target.value)} required />
-        <select value={severity} onChange={e => setSeverity(e.target.value as any)}>
-          <option value="">Severity (optional)</option>
-          <option value="mild">mild</option>
-          <option value="moderate">moderate</option>
-          <option value="severe">severe</option>
-        </select>
-        {/* onset_at input omitted until backend supports it */}
-        <button type="submit">Add Symptom</button>
-      </form>
+    <div className="container">
+      <div className="card" style={{ maxWidth: 640 }}>
+        <h2>Symptoms</h2>
+        {error && <div className="badge danger">{error}</div>}
+        <form onSubmit={onSubmit} className="stack gap-3">
+          <textarea className="textarea" placeholder="Describe your symptom" value={description} onChange={e=>setDescription(e.target.value)} required />
+          <select className="select" value={severity} onChange={e => setSeverity(e.target.value as any)}>
+            <option value="">Severity (optional)</option>
+            <option value="mild">mild</option>
+            <option value="moderate">moderate</option>
+            <option value="severe">severe</option>
+          </select>
+          {/* onset_at input omitted until backend supports it */}
+          <button className="btn btn-primary" type="submit" disabled={saving}>
+            {saving && <span className="spinner" style={{ marginRight: 8 }} />}
+            {saving ? 'Adding...' : 'Add Symptom'}
+          </button>
+        </form>
+      </div>
 
-      <h3 style={{ marginTop: 24 }}>Recent</h3>
-      <ul>
-        {items.map(it => (
-          <li key={it.id}>
-            <div><strong>{new Date(it.created_at).toLocaleString()}</strong></div>
-            <div>{it.description}</div>
-            <div>Severity: {it.severity ?? 'N/A'} {it.onset_at ? `(onset ${new Date(it.onset_at).toLocaleString()})` : ''}</div>
-          </li>
-        ))}
-      </ul>
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>Recent</h3>
+        <table className="table">
+          <thead><tr><th>When</th><th>Description</th><th>Severity</th></tr></thead>
+          <tbody>
+            {items.map(it => (
+              <tr key={it.id}>
+                <td>{new Date(it.created_at).toLocaleString()}</td>
+                <td>{it.description}</td>
+                <td>{it.severity ?? 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

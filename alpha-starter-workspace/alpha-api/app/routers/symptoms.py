@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from ..db import get_db
 from .. import models, schemas
 from ..models_symptoms import SymptomRecord
 from ..security import get_current_user, new_uuid
 from ..services.llm_client import llm_client
+import json
 
 router = APIRouter()
 
@@ -56,12 +57,22 @@ def list_symptoms(
 
 @router.post("/analyze", response_model=schemas.SymptomAnalysisOut)
 def analyze_symptom(
-    payload: schemas.SymptomIn,
+    payload: dict | str = Body(...),
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user)
 ):
-    description = (payload.description or "").strip().lower()
-    severity = (payload.severity or "").strip().lower() if isinstance(payload.severity, str) else None
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
+    try:
+        data = schemas.SymptomIn(**payload)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid request body")
+
+    description = (data.description or "").strip().lower()
+    severity = (data.severity or "").strip().lower() if isinstance(data.severity, str) else None
 
     advice: list[str] = []
     risk_flags: list[str] = []
@@ -79,11 +90,15 @@ def analyze_symptom(
         advice.append("Consider rest, hydration, and a calm environment.")
 
     if llm_client.is_configured():
-        # Optionally enrich with LLM while keeping guardrails
-        llm = llm_client.decodeMedication("general symptom guidance", None)
-        extra = llm.get("usage")
-        if extra:
-            advice.append(extra)
+        try:
+            llm = llm_client.analyzeSymptoms(data.description, data.severity if isinstance(data.severity, str) else None)
+            for a in (llm.get("advice") or []):
+                if a and a not in advice:
+                    advice.append(a)
+            for rf in (llm.get("risk_flags") or []):
+                risk_flags.append(str(rf))
+        except Exception:
+            pass
 
     disclaimer = (
         "General, non-clinical guidance only. Not a diagnosis. "

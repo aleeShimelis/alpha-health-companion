@@ -14,11 +14,12 @@ export default function Login() {
     e.preventDefault()
     setErr(null)
     try {
-      const res = await api<{ access_token: string }>('/auth/login', {
+      const res = await api<{ access_token: string; refresh_token?: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       })
       setToken(res.access_token)
+      if (res.refresh_token) localStorage.setItem('refresh_token', res.refresh_token)
       nav('/dashboard')
     } catch (e:any) {
       setErr(e.message || 'Login failed')
@@ -26,16 +27,18 @@ export default function Login() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '60px auto', fontFamily: 'sans-serif' }}>
-      <h2>Login</h2>
-      <form onSubmit={onSubmit}>
-        <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} style={{display:'block', width:'100%', marginBottom:8}} />
-        <input placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} style={{display:'block', width:'100%', marginBottom:8}} />
-        <button type="submit">Login</button>
-      </form>
-      {err && <div style={{color:'red', marginTop:8}}>{err}</div>}
-      <div style={{marginTop:12}}>
-        No account? <Link to="/register">Register</Link>
+    <div className="container" style={{ maxWidth: 520 }}>
+      <div className="card">
+        <h2>Welcome back</h2>
+        <form onSubmit={onSubmit} className="stack gap-3">
+          <input className="input" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
+          <input className="input" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+          <button type="submit" className="btn btn-primary">Login</button>
+        </form>
+        {err && <div style={{color:'#ff6b6b', marginTop:8}}>{err}</div>}
+        <div style={{marginTop:12}}>
+          No account? <Link to="/register">Register</Link>
+        </div>
       </div>
     </div>
   )

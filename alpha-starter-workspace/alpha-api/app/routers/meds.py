@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
+import json
 from ..services.llm_client import llm_client
 
 
@@ -21,11 +22,22 @@ router = APIRouter()
 
 
 @router.post("/decoder", response_model=MedDecodeOut, status_code=status.HTTP_201_CREATED)
-def decode_medication(payload: MedDecodeIn):
+def decode_medication(payload: Dict[str, Any] | str = Body(...)):
+    # Accept robust payloads: either dict or a JSON string
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON body")
+    try:
+        data = MedDecodeIn(**payload)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid request body")
+
     if not llm_client.is_configured():
         raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="LLM not configured")
 
-    result = llm_client.decodeMedication(payload.name, payload.user_context)
+    result = llm_client.decodeMedication(data.name, data.user_context)
 
     # Unit-safe guardrails: ensure text does not include dosage advice beyond label
     usage_text = result.get("usage") or "Follow the product label and pharmacist guidance."

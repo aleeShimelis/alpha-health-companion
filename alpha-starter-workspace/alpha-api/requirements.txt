@@ -13,3 +13,6 @@ redis
 bcrypt
 PyJWT
 email-validator
+openai>=1.52.0
+pywebpush
+cryptography

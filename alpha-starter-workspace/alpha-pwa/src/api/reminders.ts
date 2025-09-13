@@ -29,3 +29,29 @@ export async function ensurePushSubscription(vapidPublicKey?: string) {
   return sub
 }
 
+export type ReminderIn = { message: string; scheduled_at: string }
+export type ReminderOut = ReminderIn & { id: string; user_id: string; sent_at: string | null }
+
+export async function scheduleReminder(token: string, body: ReminderIn){
+  return api<ReminderOut>('/reminders', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body)
+  })
+}
+
+export async function listReminders(token: string){
+  return api<ReminderOut[]>('/reminders', { headers: { Authorization: `Bearer ${token}` } })
+}
+
+export async function deleteReminder(token: string, id: string){
+  return api<null>(`/reminders/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+}
+
+export async function sendNow(token: string, title='ALPHA Reminder', body='You have a reminder'){
+  return api<{ sent: number; failed: number }>(`/reminders/send`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ title, body })
+  })
+}

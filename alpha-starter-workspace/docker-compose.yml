@@ -4,6 +4,8 @@ services:
       context: ./alpha-api
     env_file:
       - ./alpha-api/.env
+    environment:
+      - ALPHA_DISABLE_CREATE_ALL=1
     ports:
       - "8001:8000"
     depends_on:

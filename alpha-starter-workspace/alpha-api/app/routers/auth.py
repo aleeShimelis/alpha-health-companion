@@ -8,6 +8,10 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from .. import models
 from ..security import create_access_token, hash_password, verify_password, get_current_user
+from ..security import new_uuid
+from datetime import datetime, timedelta, timezone
+import secrets
+from ..services import emailer
 
 
 router = APIRouter()
@@ -22,6 +26,7 @@ class RegisterIn(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
 
@@ -61,7 +66,9 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
         pass
     db.commit()
     token = create_access_token(user.id)
-    return TokenOut(access_token=token)
+    # create refresh token
+    rt = _issue_refresh_token(db, user.id)
+    return TokenOut(access_token=token, refresh_token=rt)
 
 
 class LoginIn(BaseModel):
@@ -78,10 +85,125 @@ def login(req: Request, payload: LoginIn, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(user.id)
-    return TokenOut(access_token=token)
+    rt = _issue_refresh_token(db, user.id)
+    return TokenOut(access_token=token, refresh_token=rt)
 
 
 @router.get("/me")
 def me(user: models.User = Depends(get_current_user)):
     return {"id": user.id, "email": user.email}
 
+
+class PasswordResetRequestIn(BaseModel):
+    email: EmailStr
+
+
+@router.post("/password/request", status_code=status.HTTP_204_NO_CONTENT)
+def password_request(payload: PasswordResetRequestIn, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    # Always return 204 to avoid account enumeration
+    if not user:
+        return
+    token = secrets.token_urlsafe(32)
+    expires = datetime.now(timezone.utc) + timedelta(hours=1)
+    rec = models.PasswordReset(
+        id=new_uuid(), user_id=user.id, token=token, expires_at=expires, used=False
+    )
+    db.add(rec)
+    db.commit()
+    # Email the token if configured (non-revealing message)
+    reset_url = f"https://example.com/reset?token={token}"
+    emailer.send_text(
+        to=user.email,
+        subject="ALPHA password reset",
+        body=(
+            "You (or someone) requested a password reset for your ALPHA account.\n\n"
+            f"Use this token in the app to reset your password: {token}\n"
+            f"Or open: {reset_url}\n\n"
+            "If you didn't request this, you can ignore this email."
+        ),
+    )
+    return
+
+
+class PasswordResetConfirmIn(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.post("/password/reset", status_code=status.HTTP_204_NO_CONTENT)
+def password_reset(payload: PasswordResetConfirmIn, db: Session = Depends(get_db)):
+    rec = (
+        db.query(models.PasswordReset)
+        .filter(models.PasswordReset.token == payload.token)
+        .first()
+    )
+    if not rec or rec.used:
+        raise HTTPException(status_code=400, detail="Invalid or used token")
+    now = datetime.now(timezone.utc)
+    if rec.expires_at.replace(tzinfo=timezone.utc) < now:
+        raise HTTPException(status_code=400, detail="Token expired")
+    user = db.get(models.User, rec.user_id)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    user.password_hash = hash_password(payload.new_password)
+    rec.used = True
+    db.commit()
+    return
+
+def _issue_refresh_token(db: Session, user_id: str) -> str:
+    from ..config import settings
+    from datetime import datetime, timedelta, timezone
+    import secrets
+    expires = datetime.now(timezone.utc) + timedelta(days=int(settings.REFRESH_EXPIRE_DAYS))
+    token = secrets.token_urlsafe(32)
+    rec = models.RefreshToken(id=new_uuid(), user_id=user_id, token=token, expires_at=expires, revoked=False)
+    db.add(rec)
+    db.commit()
+    return token
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str
+
+
+class RefreshOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@router.post("/refresh", response_model=RefreshOut)
+def refresh_token(payload: RefreshIn, db: Session = Depends(get_db)):
+    from datetime import datetime, timezone
+    rec = (
+        db.query(models.RefreshToken)
+        .filter(models.RefreshToken.token == payload.refresh_token)
+        .first()
+    )
+    if not rec or rec.revoked:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    now = datetime.now(timezone.utc)
+    if rec.expires_at.replace(tzinfo=timezone.utc) < now:
+        raise HTTPException(status_code=401, detail="Refresh token expired")
+    user = db.get(models.User, rec.user_id)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    at = create_access_token(user.id)
+    return RefreshOut(access_token=at)
+
+
+class LogoutIn(BaseModel):
+    refresh_token: str
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(payload: LogoutIn, db: Session = Depends(get_db)):
+    rec = (
+        db.query(models.RefreshToken)
+        .filter(models.RefreshToken.token == payload.refresh_token)
+        .first()
+    )
+    if rec:
+        rec.revoked = True
+        db.commit()
+    return
