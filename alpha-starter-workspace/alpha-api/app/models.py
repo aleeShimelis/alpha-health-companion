@@ -40,6 +40,17 @@ class HealthProfile(Base):
     conditions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sleep_pref: Mapped[Optional[str]] = mapped_column(
         String(64), nullable=True)
+    # Expanded profile fields
+    blood_type: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    activity_level: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # sedentary|light|moderate|active
+    smoking_status: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # never|former|current
+    alcohol_use: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # none|light|moderate|heavy
+    medications: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # CSV
+    surgeries: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # CSV
+    family_history: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    preferred_units: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)  # metric|imperial
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

@@ -47,6 +47,16 @@ def get_me(
         allergies=_split_csv(prof.allergies),
         conditions=_split_csv(prof.conditions),
         sleep_pref=prof.sleep_pref,
+        blood_type=prof.blood_type,
+        activity_level=prof.activity_level,
+        smoking_status=prof.smoking_status,
+        alcohol_use=prof.alcohol_use,
+        medications=_split_csv(prof.medications),
+        surgeries=_split_csv(prof.surgeries),
+        family_history=prof.family_history,
+        emergency_contact_name=prof.emergency_contact_name,
+        emergency_contact_phone=prof.emergency_contact_phone,
+        preferred_units=prof.preferred_units,
     )
 
 
@@ -72,6 +82,16 @@ def update_me(
     prof.allergies = _join_csv(payload.allergies)
     prof.conditions = _join_csv(payload.conditions)
     prof.sleep_pref = payload.sleep_pref
+    prof.blood_type = payload.blood_type
+    prof.activity_level = payload.activity_level
+    prof.smoking_status = payload.smoking_status
+    prof.alcohol_use = payload.alcohol_use
+    prof.medications = _join_csv(payload.medications)
+    prof.surgeries = _join_csv(payload.surgeries)
+    prof.family_history = payload.family_history
+    prof.emergency_contact_name = payload.emergency_contact_name
+    prof.emergency_contact_phone = payload.emergency_contact_phone
+    prof.preferred_units = payload.preferred_units
 
     db.commit()
     db.refresh(prof)
@@ -88,4 +108,14 @@ def update_me(
         allergies=_split_csv(prof.allergies),
         conditions=_split_csv(prof.conditions),
         sleep_pref=prof.sleep_pref,
+        blood_type=prof.blood_type,
+        activity_level=prof.activity_level,
+        smoking_status=prof.smoking_status,
+        alcohol_use=prof.alcohol_use,
+        medications=_split_csv(prof.medications),
+        surgeries=_split_csv(prof.surgeries),
+        family_history=prof.family_history,
+        emergency_contact_name=prof.emergency_contact_name,
+        emergency_contact_phone=prof.emergency_contact_phone,
+        preferred_units=prof.preferred_units,
     )

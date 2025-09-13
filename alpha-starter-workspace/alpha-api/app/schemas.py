@@ -73,6 +73,16 @@ class ProfileIn(BaseModel):
     allergies: list[str] | None = None
     conditions: list[str] | None = None
     sleep_pref: str | None = None
+    blood_type: str | None = None
+    activity_level: str | None = None
+    smoking_status: str | None = None
+    alcohol_use: str | None = None
+    medications: list[str] | None = None
+    surgeries: list[str] | None = None
+    family_history: str | None = None
+    emergency_contact_name: str | None = None
+    emergency_contact_phone: str | None = None
+    preferred_units: str | None = None
 
 
 class ProfileOut(ProfileIn):
